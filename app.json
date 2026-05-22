@@ -1,5 +1,5 @@
 {
-  "_comment": "Generated via homey-compose – do not edit directly; edit .homeycompose/ sources instead",
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.ebite.groheondus",
   "version": "1.0.0",
   "compatibility": ">=5.0.0",
@@ -12,7 +12,9 @@
     "en": "Integrate Grohe Sense Guard and Grohe Sense with Homey",
     "sv": "Integrera Grohe Sense Guard och Grohe Sense med Homey"
   },
-  "category": ["appliances"],
+  "category": [
+    "appliances"
+  ],
   "brandColor": "#005EA9",
   "permissions": [],
   "images": {
@@ -22,5 +24,288 @@
   "author": {
     "name": "Erik Cullberg",
     "email": "erik@ebite.se"
-  }
+  },
+  "flow": {
+    "triggers": [
+      {
+        "id": "notification_received",
+        "title": {
+          "en": "Notification received from Grohe",
+          "sv": "Notifikation mottagen från Grohe"
+        },
+        "tokens": [
+          {
+            "name": "category",
+            "type": "number",
+            "title": {
+              "en": "Category",
+              "sv": "Kategori"
+            }
+          },
+          {
+            "name": "type",
+            "type": "number",
+            "title": {
+              "en": "Type",
+              "sv": "Typ"
+            }
+          },
+          {
+            "name": "message",
+            "type": "string",
+            "title": {
+              "en": "Message",
+              "sv": "Meddelande"
+            }
+          },
+          {
+            "name": "severity",
+            "type": "string",
+            "title": {
+              "en": "Severity",
+              "sv": "Allvarlighetsgrad"
+            }
+          }
+        ]
+      },
+      {
+        "id": "valve_changed",
+        "title": {
+          "en": "Valve state changed",
+          "sv": "Ventilläge ändrat"
+        },
+        "titleFormatted": {
+          "en": "Valve on [[device]] changed to [[new_state]]",
+          "sv": "Ventil på [[device]] ändrad till [[new_state]]"
+        },
+        "tokens": [
+          {
+            "name": "new_state",
+            "type": "string",
+            "title": {
+              "en": "New state",
+              "sv": "Nytt läge"
+            }
+          }
+        ]
+      },
+      {
+        "id": "water_leak_detected",
+        "title": {
+          "en": "Water leak detected",
+          "sv": "Vattenläcka upptäckt"
+        },
+        "titleFormatted": {
+          "en": "A water leak was detected on [[device]]",
+          "sv": "En vattenläcka upptäcktes på [[device]]"
+        },
+        "tokens": [
+          {
+            "name": "notification_type",
+            "type": "string",
+            "title": {
+              "en": "Notification type",
+              "sv": "Notifikationstyp"
+            }
+          },
+          {
+            "name": "notification_message",
+            "type": "string",
+            "title": {
+              "en": "Notification message",
+              "sv": "Notifikationsmeddelande"
+            }
+          }
+        ]
+      }
+    ],
+    "conditions": [
+      {
+        "id": "is_leak_active",
+        "title": {
+          "en": "A water leak alarm is active",
+          "sv": "Ett vattenlarmsalarm är aktivt"
+        },
+        "titleFormatted": {
+          "en": "A water leak alarm is active on [[device]]",
+          "sv": "Ett vattenlarm är aktivt på [[device]]"
+        }
+      },
+      {
+        "id": "valve_is_open",
+        "title": {
+          "en": "Valve is open",
+          "sv": "Ventilen är öppen"
+        },
+        "titleFormatted": {
+          "en": "Valve on [[device]] is open",
+          "sv": "Ventilen på [[device]] är öppen"
+        }
+      }
+    ],
+    "actions": [
+      {
+        "id": "close_water",
+        "title": {
+          "en": "Close water valve",
+          "sv": "Stäng vattenventilen"
+        },
+        "titleFormatted": {
+          "en": "Close water valve on [[device]]",
+          "sv": "Stäng vattenventilen på [[device]]"
+        }
+      },
+      {
+        "id": "open_water",
+        "title": {
+          "en": "Open water valve",
+          "sv": "Öppna vattenventilen"
+        },
+        "titleFormatted": {
+          "en": "Open water valve on [[device]]",
+          "sv": "Öppna vattenventilen på [[device]]"
+        }
+      },
+      {
+        "id": "request_measurement_now",
+        "title": {
+          "en": "Request measurement now",
+          "sv": "Hämta mätvärden nu"
+        },
+        "titleFormatted": {
+          "en": "Request a measurement from [[device]] now",
+          "sv": "Hämta mätvärden från [[device]] nu"
+        }
+      }
+    ]
+  },
+  "drivers": [
+    {
+      "name": {
+        "en": "Sense / Sense Plus",
+        "sv": "Sense / Sense Plus"
+      },
+      "class": "sensor",
+      "capabilities": [
+        "alarm_water",
+        "measure_temperature",
+        "measure_humidity",
+        "measure_battery"
+      ],
+      "energy": {
+        "batteries": [
+          "AA",
+          "AA"
+        ]
+      },
+      "platforms": [
+        "local",
+        "cloud"
+      ],
+      "connectivity": [
+        "cloud"
+      ],
+      "images": {
+        "small": "/drivers/sense/assets/images/small.png",
+        "large": "/drivers/sense/assets/images/large.png"
+      },
+      "pair": [
+        {
+          "id": "login_credentials",
+          "template": "login_credentials"
+        },
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "id": "sense"
+    },
+    {
+      "name": {
+        "en": "Sense Guard",
+        "sv": "Sense Guard"
+      },
+      "class": "other",
+      "capabilities": [
+        "onoff",
+        "measure_water",
+        "measure_pressure",
+        "measure_temperature",
+        "meter_water",
+        "alarm_water"
+      ],
+      "capabilitiesOptions": {
+        "onoff": {
+          "title": {
+            "en": "Water valve",
+            "sv": "Vattenventil"
+          },
+          "uiQuickAction": false
+        }
+      },
+      "platforms": [
+        "local",
+        "cloud"
+      ],
+      "connectivity": [
+        "cloud"
+      ],
+      "images": {
+        "small": "/drivers/sense_guard/assets/images/small.png",
+        "large": "/drivers/sense_guard/assets/images/large.png"
+      },
+      "settings": [
+        {
+          "id": "allow_valve_control",
+          "type": "checkbox",
+          "label": {
+            "en": "Allow Homey to control the valve",
+            "sv": "Tillåt Homey att styra ventilen"
+          },
+          "hint": {
+            "en": "Disable to prevent flows from accidentally shutting off the water",
+            "sv": "Inaktivera för att förhindra att flows av misstag stänger av vattnet"
+          },
+          "value": false
+        },
+        {
+          "id": "poll_interval_status",
+          "type": "number",
+          "label": {
+            "en": "Status polling interval (seconds)",
+            "sv": "Pollningsintervall för status (sekunder)"
+          },
+          "min": 30,
+          "max": 600,
+          "value": 90
+        }
+      ],
+      "pair": [
+        {
+          "id": "login_credentials",
+          "template": "login_credentials"
+        },
+        {
+          "id": "list_devices",
+          "template": "list_devices",
+          "navigation": {
+            "next": "add_devices"
+          }
+        },
+        {
+          "id": "add_devices",
+          "template": "add_devices"
+        }
+      ],
+      "id": "sense_guard"
+    }
+  ]
 }

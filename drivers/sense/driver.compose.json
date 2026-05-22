@@ -7,6 +7,9 @@
     "measure_humidity",
     "measure_battery"
   ],
+  "energy": {
+    "batteries": ["AA", "AA"]
+  },
   "platforms": ["local", "cloud"],
   "connectivity": ["cloud"],
   "images": {
