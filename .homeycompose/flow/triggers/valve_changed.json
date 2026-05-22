@@ -1,0 +1,11 @@
+{
+  "id": "valve_changed",
+  "title": { "en": "Valve state changed", "sv": "Ventilläge ändrat" },
+  "titleFormatted": {
+    "en": "Valve on [[device]] changed to [[new_state]]",
+    "sv": "Ventil på [[device]] ändrad till [[new_state]]"
+  },
+  "tokens": [
+    { "name": "new_state", "type": "string", "title": { "en": "New state", "sv": "Nytt läge" } }
+  ]
+}

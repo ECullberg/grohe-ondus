@@ -1,0 +1,26 @@
+{
+  "_comment": "Generated via homey-compose – do not edit directly; edit .homeycompose/ sources instead",
+  "id": "com.ebite.groheondus",
+  "version": "1.0.0",
+  "compatibility": ">=5.0.0",
+  "sdk": 3,
+  "name": {
+    "en": "Sense Guard Connector",
+    "sv": "Sense Guard Connector"
+  },
+  "description": {
+    "en": "Integrate Grohe Sense Guard and Grohe Sense with Homey",
+    "sv": "Integrera Grohe Sense Guard och Grohe Sense med Homey"
+  },
+  "category": ["appliances"],
+  "brandColor": "#005EA9",
+  "permissions": [],
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png"
+  },
+  "author": {
+    "name": "Erik Cullberg",
+    "email": "erik@ebite.se"
+  }
+}

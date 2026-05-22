@@ -1,0 +1,12 @@
+{
+  "id": "water_leak_detected",
+  "title": { "en": "Water leak detected", "sv": "Vattenläcka upptäckt" },
+  "titleFormatted": {
+    "en": "A water leak was detected on [[device]]",
+    "sv": "En vattenläcka upptäcktes på [[device]]"
+  },
+  "tokens": [
+    { "name": "notification_type",    "type": "string", "title": { "en": "Notification type",    "sv": "Notifikationstyp" }    },
+    { "name": "notification_message", "type": "string", "title": { "en": "Notification message", "sv": "Notifikationsmeddelande" } }
+  ]
+}

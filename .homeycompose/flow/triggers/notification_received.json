@@ -1,0 +1,10 @@
+{
+  "id": "notification_received",
+  "title": { "en": "Notification received from Grohe", "sv": "Notifikation mottagen från Grohe" },
+  "tokens": [
+    { "name": "category", "type": "number", "title": { "en": "Category", "sv": "Kategori" } },
+    { "name": "type",     "type": "number", "title": { "en": "Type",     "sv": "Typ" }      },
+    { "name": "message",  "type": "string", "title": { "en": "Message",  "sv": "Meddelande" } },
+    { "name": "severity", "type": "string", "title": { "en": "Severity", "sv": "Allvarlighetsgrad" } }
+  ]
+}

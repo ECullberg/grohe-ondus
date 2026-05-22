@@ -1,0 +1,25 @@
+{
+  "name": "com.ebite.groheondus",
+  "version": "1.0.0",
+  "description": "Homey app integrating Grohe Sense Guard and Sense with Athom Homey Pro",
+  "main": "app.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "validate": "homey app validate",
+    "lint": "eslint . --ext .ts"
+  },
+  "dependencies": {
+    "homey-oauth2app": "3.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "homey": "^2.9.2",
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "author": "Erik Cullberg <erik@ebite.se> (eBite AB)",
+  "license": "MIT"
+}

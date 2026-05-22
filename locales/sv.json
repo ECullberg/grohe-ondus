@@ -1,0 +1,25 @@
+{
+  "warnings": {
+    "token_expiring_critical": "Grohe-anslutningen löper ut om {{days}} dagar. Öppna Homey-appen och pareera om enheten."
+  },
+  "errors": {
+    "token_expired": "Anslutningen till Grohe har upphört. Pareera om enheten i Homey-appen.",
+    "tandc_not_accepted": "Grohe har uppdaterat sina användarvillkor. Öppna Ondus-appen och godkänn de nya villkoren för att fortsätta använda integrationen.",
+    "valve_rate_limited": "Ventilkommando blockerat – för många försök på kort tid. Vänta 10 sekunder.",
+    "valve_control_disabled": "Ventilstyrning är inaktiverad i enhetsinställningarna. Aktivera 'Tillåt Homey att styra ventilen' för att använda denna funktion."
+  },
+  "notifications": {
+    "valve_changed": "Ventilen är nu {{state}}."
+  },
+  "common": {
+    "open": "öppen",
+    "closed": "stängd"
+  },
+  "pair": {
+    "login": {
+      "title": "Logga in på ditt Grohe-konto",
+      "username_label": "E-postadress",
+      "password_label": "Lösenord"
+    }
+  }
+}

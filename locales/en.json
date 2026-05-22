@@ -1,0 +1,25 @@
+{
+  "warnings": {
+    "token_expiring_critical": "Grohe connection expires in {{days}} days. Open the Homey app and re-pair the device."
+  },
+  "errors": {
+    "token_expired": "The Grohe connection has expired. Re-pair the device in the Homey app.",
+    "tandc_not_accepted": "Grohe has updated its Terms & Conditions. Open the Ondus app and accept the new terms to continue using this integration.",
+    "valve_rate_limited": "Valve command blocked – too many attempts in a short time. Wait 10 seconds.",
+    "valve_control_disabled": "Valve control is disabled in device settings. Enable 'Allow Homey to control the valve' to use this feature."
+  },
+  "notifications": {
+    "valve_changed": "The valve is now {{state}}."
+  },
+  "common": {
+    "open": "open",
+    "closed": "closed"
+  },
+  "pair": {
+    "login": {
+      "title": "Log in to your Grohe account",
+      "username_label": "Email address",
+      "password_label": "Password"
+    }
+  }
+}

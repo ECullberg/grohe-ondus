@@ -1,0 +1,8 @@
+{
+  "id": "open_water",
+  "title": { "en": "Open water valve", "sv": "Öppna vattenventilen" },
+  "titleFormatted": {
+    "en": "Open water valve on [[device]]",
+    "sv": "Öppna vattenventilen på [[device]]"
+  }
+}

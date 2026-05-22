@@ -1,0 +1,9 @@
+node_modules/
+.env
+.env.*
+*.token
+userdata/
+.homeycompose/.cache
+*.log
+.DS_Store
+*.js.map
