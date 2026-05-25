@@ -20,6 +20,7 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
 
   private _lastValveCommand = 0;
   private _leakActive = false;
+  private _valveOpen = false;
 
   async onOAuth2Init() {
     const { locationId, roomId, applianceId } = this.getStore();
@@ -78,7 +79,10 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
       }),
     });
 
-    this.homey.emit('valve_changed', { device: this, open });
+    this._valveOpen = open;
+    await this.homey.flow.getDeviceTriggerCard('valve_changed').trigger(this, {
+      new_state: open ? this.homey.__('common.open') : this.homey.__('common.closed'),
+    }).catch(this.error.bind(this));
   }
 
   // ── Polling ────────────────────────────────────────────────────────────────
@@ -98,6 +102,7 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
       const cmd = await client.getApplianceCommand(this.locationId, this.roomId, this.applianceId);
       const valveOpen = cmd?.command?.valve_open;
       if (typeof valveOpen === 'boolean') {
+        this._valveOpen = valveOpen;
         await this.setCapabilityValue('onoff', valveOpen).catch(this.error.bind(this));
       }
     } catch (err: any) {
@@ -112,14 +117,18 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
   private async _pollData() {
     try {
       const client = this.oAuth2Client as OndusClient;
+      // groupBy=day gives one running daily aggregate that Grohe updates throughout the day.
+      // groupBy=hour only yields midnight data – no finer granularity available via the public API.
       const today = new Date().toISOString().split('T')[0];
-      const data = await client.getApplianceData(this.locationId, this.roomId, this.applianceId, today);
+      const data = await client.getApplianceData(this.locationId, this.roomId, this.applianceId, today, today, 'day');
 
-      // Measurements are sorted by 'timestamp' field (per HA sensor.py line 140-145)
       const measurements: any[] = data?.data?.measurement ?? [];
+      const withdrawalsRaw: any[] = data?.data?.withdrawals ?? [];
+      this.log(`Data: ${measurements.length} measurements, ${withdrawalsRaw.length} withdrawals`);
       if (measurements.length > 0) {
+        // Daily aggregate – sort by date field; last element is the most recent
         measurements.sort((a: any, b: any) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          (a.date ?? a.timestamp ?? '').localeCompare(b.date ?? b.timestamp ?? '')
         );
         const latest = measurements[measurements.length - 1];
 
@@ -127,42 +136,47 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
         if (flowrate !== null) {
           await this.setCapabilityValue('measure_water', flowrate * FLOWRATE_LS_TO_LMIN).catch(this.error.bind(this));
         }
-
         const pressure = safeNumber(latest?.pressure);
         if (pressure !== null) {
           await this.setCapabilityValue('measure_pressure', pressure).catch(this.error.bind(this));
         }
-
         const temp = safeNumber(latest?.temperature_guard);
         if (temp !== null) {
           await this.setCapabilityValue('measure_temperature', temp).catch(this.error.bind(this));
         }
       }
 
-      // Sum withdrawals since midnight local time
-      const withdrawals: any[] = data?.data?.withdrawals ?? [];
-      const midnight = new Date();
-      midnight.setHours(0, 0, 0, 0);
-      const midnightTs = midnight.getTime();
-
+      // Daily aggregates use 'date' (YYYY-MM-DD) on withdrawal records
+      const withdrawals: any[] = withdrawalsRaw;
+      const todayDate = new Date().toISOString().split('T')[0];
       let totalLiters = 0;
       for (const w of withdrawals) {
-        const ts = w?.starttime ? new Date(w.starttime).getTime() : 0;
-        if (ts >= midnightTs) {
+        // Support both starttime (ISO from /data) and date (YYYY-MM-DD from /data/aggregated)
+        const wDate = (w?.starttime ?? w?.date ?? '').slice(0, 10);
+        if (wDate === todayDate) {
           const liters = safeNumber(w?.waterconsumption);
           if (liters !== null) totalLiters += liters;
         }
       }
+      this.log(`Water today: ${totalLiters} L from ${withdrawals.length} withdrawals`);
+      // meter_water custom capability uses liters (L) as unit
       await this.setCapabilityValue('meter_water', totalLiters).catch(this.error.bind(this));
 
     } catch (err: any) {
-      if (err?.code === 429) {
-        this.log('Data poll rate-limited – skipping this tick');
-        return;
-      }
+      if (err?.code === 429) { this.log('Data poll rate-limited'); return; }
+      // 404 means no historical data yet – not an error worth reporting
+      if (String(err).includes('404')) { this.log('No historical data available yet'); return; }
       this.error('Data poll failed:', redact(String(err)));
     }
   }
+
+  // ── Public API (called by driver flow listeners) ────────────────────────────
+
+  public async requestPoll() { await this._poll(); }
+  public async openValve()   { await this._setValve(true); }
+  public async closeValve()  { await this._setValve(false); }
+  public isLeakActive()      { return this._leakActive; }
+  public isValveOpen()       { return this._valveOpen; }
 
   private async _pollNotifications() {
     try {
@@ -183,11 +197,10 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
           const entry = getNotification(critical.category, critical.type);
           const msg = entry ? entry.sv : `Kategori ${critical.category}, typ ${critical.type}`;
           await this.homey.notifications.createNotification({ excerpt: msg });
-          this.homey.emit('water_leak_detected', {
-            device: this,
+          await this.homey.flow.getDeviceTriggerCard('water_leak_detected').trigger(this, {
             notification_type: String(critical.type),
             notification_message: msg,
-          });
+          }).catch(this.error.bind(this));
         }
       } else if (!criticalActive && this._leakActive) {
         this._leakActive = false;

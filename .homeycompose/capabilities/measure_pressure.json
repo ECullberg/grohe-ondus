@@ -1,0 +1,12 @@
+{
+  "type": "number",
+  "title": { "en": "Water pressure", "sv": "Vattentryck" },
+  "units": { "en": "bar", "sv": "bar" },
+  "decimals": 2,
+  "insights": true,
+  "chartType": "spline",
+  "color": "#32C5FF",
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor"
+}

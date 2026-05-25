@@ -307,5 +307,44 @@
       ],
       "id": "sense_guard"
     }
-  ]
+  ],
+  "capabilities": {
+    "measure_pressure": {
+      "type": "number",
+      "title": {
+        "en": "Water pressure",
+        "sv": "Vattentryck"
+      },
+      "units": {
+        "en": "bar",
+        "sv": "bar"
+      },
+      "decimals": 2,
+      "insights": true,
+      "chartType": "spline",
+      "color": "#32C5FF",
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor"
+    },
+    "meter_water": {
+      "type": "number",
+      "title": {
+        "en": "Water used today",
+        "sv": "Vattenförbrukning idag"
+      },
+      "units": {
+        "en": "L",
+        "sv": "L"
+      },
+      "decimals": 1,
+      "min": 0,
+      "insights": true,
+      "chartType": "spline",
+      "color": "#0091FF",
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor"
+    }
+  }
 }

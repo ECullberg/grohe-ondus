@@ -12,6 +12,11 @@ module.exports = class GroheOndusApp extends OAuth2App {
   async onOAuth2Init() {
     this.log('App initialized');
 
+    // Register shared flow condition (applies to both Sense and Sense Guard devices)
+    this.homey.flow
+      .getConditionCard('is_leak_active')
+      .registerRunListener(async (args: any) => args.device.isLeakActive());
+
     const SEVEN_DAYS = 7 * 24 * 60 * 60 * 1000;
     this._keepaliveInterval = this.homey.setInterval(
       () => this._keepaliveRefresh().catch(this.error.bind(this)),
@@ -25,11 +30,32 @@ module.exports = class GroheOndusApp extends OAuth2App {
     );
 
     this._checkTokenExpiry().catch(this.error.bind(this));
+    this._checkTandC().catch(this.error.bind(this));
   }
 
   async onUninit() {
     if (this._keepaliveInterval) this.homey.clearInterval(this._keepaliveInterval);
     if (this._expiryCheckInterval) this.homey.clearInterval(this._expiryCheckInterval);
+  }
+
+  private _tandcNotifiedAt = 0;
+
+  private async _checkTandC() {
+    // Only notify once per 24 hours to avoid spamming
+    if (Date.now() - this._tandcNotifiedAt < 24 * 60 * 60 * 1000) return;
+    const sessions = this.getSavedOAuth2Sessions();
+    for (const sessionId of Object.keys(sessions)) {
+      try {
+        const client = this.getOAuth2Client({ sessionId, configId: 'default' }) as OndusClient;
+        if (client.isTandCPending()) {
+          this._tandcNotifiedAt = Date.now();
+          await this.homey.notifications.createNotification({
+            excerpt: this.homey.__('errors.tandc_not_accepted'),
+          });
+          return;
+        }
+      } catch (_) { /* session not yet ready */ }
+    }
   }
 
   private async _keepaliveRefresh() {

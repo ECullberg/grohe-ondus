@@ -42,11 +42,16 @@ module.exports = class SenseDevice extends OAuth2Device {
     await Promise.allSettled([this._pollData(), this._pollNotifications()]);
   }
 
+  // Public accessor for the is_leak_active flow condition (registered in app.ts)
+  public isLeakActive() { return this._leakActive; }
+
   private async _pollData() {
     try {
       const client = this.oAuth2Client as OndusClient;
-      const today = new Date().toISOString().split('T')[0];
-      const data = await client.getApplianceData(this.locationId, this.roomId, this.applianceId, today);
+      const from = new Date();
+      from.setDate(from.getDate() - 7);
+      const fromDate = from.toISOString().split('T')[0];
+      const data = await client.getApplianceData(this.locationId, this.roomId, this.applianceId, fromDate);
 
       // Sorted by 'timestamp' field (per HA sensor.py)
       const measurements: any[] = data?.data?.measurement ?? [];
@@ -105,6 +110,10 @@ module.exports = class SenseDevice extends OAuth2Device {
           const entry = getNotification(critical.category, critical.type);
           const msg = entry ? entry.sv : `Kategori ${critical.category}, typ ${critical.type}`;
           await this.homey.notifications.createNotification({ excerpt: msg });
+          await this.homey.flow.getDeviceTriggerCard('water_leak_detected').trigger(this, {
+            notification_type: String(critical.type),
+            notification_message: msg,
+          }).catch(this.error.bind(this));
         }
       } else if (!criticalActive && this._leakActive) {
         this._leakActive = false;

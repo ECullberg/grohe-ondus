@@ -13,7 +13,13 @@ module.exports = class SenseDriver extends OAuth2Driver {
     for (const loc of locations) {
       const rooms = await oAuth2Client.getRooms(loc.id);
       for (const room of rooms) {
-        const appliances = await oAuth2Client.getAppliances(loc.id, room.id);
+        let appliances: any[];
+        try {
+          appliances = await oAuth2Client.getAppliances(loc.id, room.id);
+        } catch (err: any) {
+          this.log(`Skipping room ${room.id} (${room.name ?? '?'}): ${err.message}`);
+          continue;
+        }
         for (const app of appliances) {
           if (app.type !== APPLIANCE_TYPE_SENSE && app.type !== APPLIANCE_TYPE_SENSE_PLUS) continue;
           const appId = app.appliance_id ?? app.id;

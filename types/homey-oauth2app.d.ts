@@ -2,11 +2,26 @@
 // Covers the subset of the API used by this app.
 declare module 'homey-oauth2app' {
 
+  interface HomeyFlowCard {
+    registerRunListener(fn: (args: any, state: any) => Promise<any>): this;
+  }
+
+  interface HomeyDeviceTriggerCard {
+    trigger(device: any, tokens?: Record<string, any>, state?: Record<string, any>): Promise<void>;
+    registerRunListener(fn: (args: any, state: any) => Promise<boolean>): this;
+  }
+
   interface HomeyInstance {
     setInterval(fn: () => void, ms: number): NodeJS.Timeout;
     clearInterval(id: NodeJS.Timeout): void;
     notifications: {
       createNotification(opts: { excerpt: string }): Promise<void>;
+    };
+    flow: {
+      getActionCard(id: string): HomeyFlowCard;
+      getConditionCard(id: string): HomeyFlowCard;
+      getTriggerCard(id: string): HomeyFlowCard;
+      getDeviceTriggerCard(id: string): HomeyDeviceTriggerCard;
     };
     __: (key: string, tokens?: Record<string, string>) => string;
     emit(event: string, ...args: any[]): void;
@@ -18,6 +33,9 @@ declare module 'homey-oauth2app' {
     expires_in: number;
     token_type: string;
     [key: string]: any;
+    constructor(opts: { access_token?: string; refresh_token?: string; token_type?: string; expires_in?: number });
+    isRefreshable(): boolean;
+    toJSON(): object;
   }
 
   export class OAuth2Error extends Error {
@@ -71,6 +89,7 @@ declare module 'homey-oauth2app' {
     onOAuth2Deleted(): Promise<void>;
     getStore(): Record<string, any>;
     getSettings(): Record<string, any>;
+    getCapabilityValue(capability: string): any;
     setCapabilityValue(capability: string, value: any): Promise<void>;
     registerCapabilityListener(capability: string, fn: (value: any) => Promise<void>): void;
   }

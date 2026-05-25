@@ -2,6 +2,7 @@ node_modules/
 .homeybuild/
 .env
 .env.*
+env.json
 *.token
 userdata/
 .homeycompose/.cache

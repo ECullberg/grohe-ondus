@@ -1,0 +1,13 @@
+{
+  "type": "number",
+  "title": { "en": "Water used today", "sv": "Vattenförbrukning idag" },
+  "units": { "en": "L", "sv": "L" },
+  "decimals": 1,
+  "min": 0,
+  "insights": true,
+  "chartType": "spline",
+  "color": "#0091FF",
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor"
+}
