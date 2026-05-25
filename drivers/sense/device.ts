@@ -13,6 +13,10 @@ module.exports = class SenseDevice extends OAuth2Device {
   private _notifInterval?: NodeJS.Timeout;
   private _leakActive = false;
 
+  // Notification deduplication – see sense_guard/device.ts for rationale
+  private _seenNotificationIds = new Set<string>();
+  private _notificationsInitialized = false;
+
   async onOAuth2Init() {
     const { locationId, roomId, applianceId } = this.getStore();
     this.locationId = locationId;
@@ -48,16 +52,20 @@ module.exports = class SenseDevice extends OAuth2Device {
   private async _pollData() {
     try {
       const client = this.oAuth2Client as OndusClient;
+      // Use today only with groupBy=day – the aggregated endpoint stores daily averages
+      // using a 'date' field (YYYY-MM-DD), not 'timestamp'. Fetch the last 7 days so
+      // we always have at least one record even if today's hasn't synced yet.
       const from = new Date();
       from.setDate(from.getDate() - 7);
       const fromDate = from.toISOString().split('T')[0];
-      const data = await client.getApplianceData(this.locationId, this.roomId, this.applianceId, fromDate);
+      const data = await client.getApplianceData(this.locationId, this.roomId, this.applianceId, fromDate, undefined, 'day');
 
-      // Sorted by 'timestamp' field (per HA sensor.py)
       const measurements: any[] = data?.data?.measurement ?? [];
       if (measurements.length > 0) {
+        // Sort ascending by 'date' (daily aggregate field); fall back to 'timestamp'
+        // for forward-compatibility if Grohe ever changes the field name.
         measurements.sort((a: any, b: any) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          (a.date ?? a.timestamp ?? '').localeCompare(b.date ?? b.timestamp ?? '')
         );
         const latest = measurements[measurements.length - 1];
 
@@ -108,7 +116,7 @@ module.exports = class SenseDevice extends OAuth2Device {
         const critical = unread.find((n: any) => n?.category === 30);
         if (critical) {
           const entry = getNotification(critical.category, critical.type);
-          const msg = entry ? entry.sv : `Kategori ${critical.category}, typ ${critical.type}`;
+          const msg = entry ? entry.en : `Category ${critical.category}, type ${critical.type}`;
           await this.homey.notifications.createNotification({ excerpt: msg });
           await this.homey.flow.getDeviceTriggerCard('water_leak_detected').trigger(this, {
             notification_type: String(critical.type),
@@ -119,6 +127,27 @@ module.exports = class SenseDevice extends OAuth2Device {
         this._leakActive = false;
         await this.setCapabilityValue('alarm_water', false).catch(this.error.bind(this));
       }
+
+      // Fire notification_received for non-critical (info/warning) unread notifications
+      for (const n of unread) {
+        if (n?.category === 30) continue;
+        const notifId = String(n?.id ?? `${n?.category}_${n?.type}`);
+        if (!this._notificationsInitialized) {
+          this._seenNotificationIds.add(notifId);
+          continue;
+        }
+        if (this._seenNotificationIds.has(notifId)) continue;
+        this._seenNotificationIds.add(notifId);
+        const entry = getNotification(n.category, n.type);
+        const msg = entry ? entry.en : `Category ${n.category}, type ${n.type}`;
+        await this.homey.flow.getDeviceTriggerCard('notification_received').trigger(this, {
+          category: n.category,
+          type: n.type,
+          message: msg,
+          severity: entry?.severity ?? 'info',
+        }).catch(this.error.bind(this));
+      }
+      this._notificationsInitialized = true;
 
     } catch (err: any) {
       if (err?.code === 429) {

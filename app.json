@@ -5,16 +5,34 @@
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "name": {
-    "en": "Sense Guard Connector",
-    "sv": "Sense Guard Connector"
+    "en": "Grohe Ondus",
+    "sv": "Grohe Ondus"
   },
   "description": {
-    "en": "Integrate Grohe Sense Guard and Grohe Sense with Homey",
-    "sv": "Integrera Grohe Sense Guard och Grohe Sense med Homey"
+    "en": "Monitor water pressure, temperature and consumption. Close the valve automatically when a leak is detected.",
+    "sv": "Övervaka vattentryck, temperatur och förbrukning. Stäng ventilen automatiskt vid läcka."
   },
   "category": [
     "appliances"
   ],
+  "tags": {
+    "en": [
+      "grohe",
+      "water",
+      "leak",
+      "valve",
+      "sense guard",
+      "ondus"
+    ],
+    "sv": [
+      "grohe",
+      "vatten",
+      "läcka",
+      "ventil",
+      "sense guard",
+      "ondus"
+    ]
+  },
   "brandColor": "#005EA9",
   "permissions": [],
   "images": {
@@ -32,6 +50,10 @@
         "title": {
           "en": "Notification received from Grohe",
           "sv": "Notifikation mottagen från Grohe"
+        },
+        "titleFormatted": {
+          "en": "A notification was received from [[device]]",
+          "sv": "En notifikation mottogs från [[device]]"
         },
         "tokens": [
           {

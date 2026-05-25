@@ -22,6 +22,11 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
   private _leakActive = false;
   private _valveOpen = false;
 
+  // Notification deduplication – baseline is populated on the first poll so existing
+  // unread notifications don't fire on every restart.
+  private _seenNotificationIds = new Set<string>();
+  private _notificationsInitialized = false;
+
   async onOAuth2Init() {
     const { locationId, roomId, applianceId } = this.getStore();
     this.locationId = locationId;
@@ -195,7 +200,7 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
         const critical = unread.find((n: any) => n?.category === 30);
         if (critical) {
           const entry = getNotification(critical.category, critical.type);
-          const msg = entry ? entry.sv : `Kategori ${critical.category}, typ ${critical.type}`;
+          const msg = entry ? entry.en : `Category ${critical.category}, type ${critical.type}`;
           await this.homey.notifications.createNotification({ excerpt: msg });
           await this.homey.flow.getDeviceTriggerCard('water_leak_detected').trigger(this, {
             notification_type: String(critical.type),
@@ -206,6 +211,29 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
         this._leakActive = false;
         await this.setCapabilityValue('alarm_water', false).catch(this.error.bind(this));
       }
+
+      // Fire notification_received for non-critical (info/warning) unread notifications.
+      // On the first poll we only build the baseline set so that pre-existing unread
+      // notifications don't flood flows on every restart.
+      for (const n of unread) {
+        if (n?.category === 30) continue; // critical – handled by water_leak_detected
+        const notifId = String(n?.id ?? `${n?.category}_${n?.type}`);
+        if (!this._notificationsInitialized) {
+          this._seenNotificationIds.add(notifId);
+          continue;
+        }
+        if (this._seenNotificationIds.has(notifId)) continue;
+        this._seenNotificationIds.add(notifId);
+        const entry = getNotification(n.category, n.type);
+        const msg = entry ? entry.en : `Category ${n.category}, type ${n.type}`;
+        await this.homey.flow.getDeviceTriggerCard('notification_received').trigger(this, {
+          category: n.category,
+          type: n.type,
+          message: msg,
+          severity: entry?.severity ?? 'info',
+        }).catch(this.error.bind(this));
+      }
+      this._notificationsInitialized = true;
 
     } catch (err: any) {
       if (err?.code === 429) {
