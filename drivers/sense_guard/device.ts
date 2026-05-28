@@ -56,9 +56,12 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
       () => this._pollStatus().catch(this.error.bind(this)),
       pollStatus * 1000 + jitter,
     );
+    // Grohe's cloud API only stores one daily aggregate per appliance, updated a
+    // few times per day as the device syncs. Polling more often than every 15 min
+    // just wastes API calls. Valve state and leak alarms poll on their own faster timers.
     this._dataInterval = this.homey.setInterval(
       () => this._pollData().catch(this.error.bind(this)),
-      5 * 60 * 1000 + jitter,
+      15 * 60 * 1000 + jitter,
     );
     this._notifInterval = this.homey.setInterval(
       () => this._pollNotifications().catch(this.error.bind(this)),

@@ -13,6 +13,9 @@
     "onoff": {
       "title": { "en": "Water valve", "sv": "Vattenventil" },
       "uiQuickAction": false
+    },
+    "measure_water": {
+      "title": { "en": "Last flow", "sv": "Senaste flöde" }
     }
   },
   "platforms": ["local", "cloud"],
