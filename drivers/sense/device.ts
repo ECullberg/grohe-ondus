@@ -23,6 +23,11 @@ module.exports = class SenseDevice extends OAuth2Device {
     this.roomId = roomId;
     this.applianceId = applianceId;
 
+    // Initialise alarm_water to false so the UI shows "no leak" instead of null
+    if (this.getCapabilityValue('alarm_water') === null) {
+      await this.setCapabilityValue('alarm_water', false).catch(this.error.bind(this));
+    }
+
     await this._poll();
 
     const jitter = Math.floor(Math.random() * 30_000);

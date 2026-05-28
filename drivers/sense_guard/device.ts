@@ -41,6 +41,12 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
       await this._setValve(value);
     });
 
+    // Initialise alarm_water to false so the UI shows "no leak" instead of null
+    // until the first critical notification (if any) arrives.
+    if (this.getCapabilityValue('alarm_water') === null) {
+      await this.setCapabilityValue('alarm_water', false).catch(this.error.bind(this));
+    }
+
     await this._poll();
 
     const jitter = Math.floor(Math.random() * 30_000);
