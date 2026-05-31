@@ -4,11 +4,6 @@ import { safeNumber } from '../../lib/safeNumber';
 import { redact } from '../../lib/redact';
 import { getNotification } from '../../lib/notifications';
 
-// HA sensor.py: `lambda x: x * 3.6` with unit m³/h implies raw value is l/s (1 l/s = 3.6 m³/h).
-// For Homey measure_water in l/min: 1 l/s = 60 l/min.
-// Needs hardware verification – homebridge stores the raw value without conversion.
-const FLOWRATE_LS_TO_LMIN = 60;
-
 module.exports = class SenseGuardDevice extends OAuth2Device {
   private locationId!: string;
   private roomId!: string;
@@ -128,12 +123,25 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
     }
   }
 
+  /**
+   * Today's date (YYYY-MM-DD) in the Homey's local timezone. Using UTC here would make
+   * "water used today" show yesterday's total during the first hours after local midnight
+   * (Sweden is UTC+1/+2), so the daily figure must be anchored to local time.
+   */
+  private _localToday(): string {
+    // homey.clock is available at runtime but missing from the bundled type defs.
+    const tz = (this.homey as any).clock.getTimezone();
+    return new Intl.DateTimeFormat('en-CA', {
+      timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
+  }
+
   private async _pollData() {
     try {
       const client = this.oAuth2Client as OndusClient;
       // groupBy=day gives one running daily aggregate that Grohe updates throughout the day.
       // groupBy=hour only yields midnight data – no finer granularity available via the public API.
-      const today = new Date().toISOString().split('T')[0];
+      const today = this._localToday();
       const data = await client.getApplianceData(this.locationId, this.roomId, this.applianceId, today, today, 'day');
 
       const measurements: any[] = data?.data?.measurement ?? [];
@@ -146,10 +154,6 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
         );
         const latest = measurements[measurements.length - 1];
 
-        const flowrate = safeNumber(latest?.flowrate);
-        if (flowrate !== null) {
-          await this.setCapabilityValue('measure_water', flowrate * FLOWRATE_LS_TO_LMIN).catch(this.error.bind(this));
-        }
         const pressure = safeNumber(latest?.pressure);
         if (pressure !== null) {
           await this.setCapabilityValue('measure_pressure', pressure).catch(this.error.bind(this));
@@ -162,12 +166,11 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
 
       // Daily aggregates use 'date' (YYYY-MM-DD) on withdrawal records
       const withdrawals: any[] = withdrawalsRaw;
-      const todayDate = new Date().toISOString().split('T')[0];
       let totalLiters = 0;
       for (const w of withdrawals) {
         // Support both starttime (ISO from /data) and date (YYYY-MM-DD from /data/aggregated)
         const wDate = (w?.starttime ?? w?.date ?? '').slice(0, 10);
-        if (wDate === todayDate) {
+        if (wDate === today) {
           const liters = safeNumber(w?.waterconsumption);
           if (liters !== null) totalLiters += liters;
         }

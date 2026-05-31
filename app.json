@@ -258,7 +258,6 @@
       "class": "other",
       "capabilities": [
         "onoff",
-        "measure_water",
         "measure_pressure",
         "measure_temperature",
         "meter_water",
@@ -271,12 +270,6 @@
             "sv": "Vattenventil"
           },
           "uiQuickAction": false
-        },
-        "measure_water": {
-          "title": {
-            "en": "Last flow",
-            "sv": "Senaste flöde"
-          }
         }
       },
       "platforms": [
