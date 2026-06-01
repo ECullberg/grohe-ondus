@@ -28,6 +28,14 @@ module.exports = class SenseGuardDevice extends OAuth2Device {
     this.roomId = roomId;
     this.applianceId = applianceId;
 
+    // Migration: measure_water was removed from the driver because it exposed a
+    // daily aggregate as if it were a live flow. Homey keeps obsolete capabilities
+    // on already-paired devices, so strip it here for existing installs.
+    const self = this as any;
+    if (self.hasCapability('measure_water')) {
+      await self.removeCapability('measure_water').catch(this.error.bind(this));
+    }
+
     this.registerCapabilityListener('onoff', async (value: boolean) => {
       const settings = this.getSettings();
       if (!settings.allow_valve_control) {
